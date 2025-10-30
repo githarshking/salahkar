@@ -1,0 +1,10 @@
+Ignore the .env file to keep secrets safe
+
+.env
+
+Other common Python ignores
+
+pycache/
+*.pyc
+.venv/
+venv/

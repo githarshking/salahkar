@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<!-- Chosen Palette: Warm Neutrals (Stone, White, Teal Accent) -->
+<!-- Application Structure Plan: A single-column, width-constrained layout (max-w-5xl). The user flows vertically: 1. Header, 2. A detailed, multi-part form, 3. The "Generate" button, 4. A loading/welcome/report area. This stacked structure is simple and mobile-first. The form is broken into three <fieldset> sections (Land, Market, User) to make the large number of inputs manageable. -->
+<!-- Visualization & Content Choices: Input: A complex HTML <form> (HTML/Tailwind). Output (Loading): A button loader and a main area spinner (HTML/CSS/Tailwind). Output (Report): AI-generated text, converted from Markdown to styled HTML (JS function). A "Download PDF" button (HTML/JS) appears with the report, which calls a new backend endpoint. Interaction: User submits form, JS sends data to `/api/generate`. Download button sends raw markdown to `/api/download_pdf`. -->
+<!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The भूमि सलाहकार</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .loader {
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid theme('colors.white');
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+        .report-loader {
+            width: 3rem;
+            height: 3rem;
+            border: 4px solid theme('colors.teal.600');
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        fieldset {
+            border: 1px solid theme('colors.stone.300');
+            border-radius: 0.375rem; /* rounded-md */
+            padding: 1.5rem; /* p-6 */
+            margin-bottom: 1.5rem; /* mb-6 */
+        }
+        legend {
+            padding: 0 0.5rem; /* px-2 */
+            margin-left: 1rem; /* ml-4 */
+            font-size: 1.125rem; /* text-lg */
+            font-weight: 600; /* font-semibold */
+            color: theme('colors.teal.700');
+        }
+        
+        /* This style is for the on-page report, not the PDF */
+        #report-to-print table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        #report-to-print th, #report-to-print td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        #report-to-print th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800 font-sans antialiased">
+
+    <div class="container max-w-5xl mx-auto p-4 md:p-8">
+        
+        <header class="text-center my-6 md:my-10">
+            <h1 class="text-4xl md:text-5xl font-bold text-teal-700">The भूमि सलाहकार</h1>
+            <p class="text-xl text-stone-600 mt-2">Eliminate financial confusion. Find the best use for your land.</p>
+        </header>
+
+        <div class="bg-white p-6 md:p-8 shadow-lg rounded-lg border border-stone-200">
+            <form id="land-form" class="space-y-6">
+                
+                <fieldset>
+                    <legend>Part 1: Your Land Details</legend>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mt-4">
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-stone-700">Your Name</label>
+                            <input type="text" id="name" name="name" required
+                                   class="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm"
+                                   placeholder="e.g., LOL">
+                        </div>
+                        <div>
+                            <label for="location" class="block text-sm font-medium text-stone-700">Location (Address or Zip Code)</label>
+                            <input type="text" id="location" name="location" required
+                                   class="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm"
+                                   placeholder="e.g., 825301, India or 123 Main St, Hazaribagh">
+                        </div>
+                        <div>
+                            <label for="latlong" class="block text-sm font-medium text-stone-700">Latitude & Longitude</label>
+                            <input type="text" id="latlong" name="latlong"
+                                   class="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm"
+                                   placeholder="e.g., 23.9937, 85.3511 (Optional, but helpful)">
+                        </div>
+                        <div>
+                            <label for="areaType" class="block text-sm font-medium text-stone-700">Area Type</label>
+                            <select id="areaType" name="areaType" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm">
+                                <option>Commercial (near shops, offices)</option>
+                                <option>Residential (near houses, apartments)</option>
+                                <option>Industrial (near factories, warehouses)</option>
+                                <option>Rural (countryside)</option>
+                                <option>Mixed-Use</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="landSize" class="block text-sm font-medium text-stone-700">Land Size</label>
+                            <input type="text" id="landSize" name="landSize" required
+                                   class="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm"
+                                   placeholder="e.g., 2 acres, 10,000 sq ft, 5 Decimal">
+                        </div>
+                        <div>
+                            <label for="landShape" class="block text-sm font-medium text-stone-700">Land Shape</label>
+                            <select id="landShape" name="landShape" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm">
+                                <option>Rectangle / Square</option>
+                                <option>Irregular Shape</option>
+                                <option>Long and Narrow</option>
+                                <option>Other / Not Sure</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="accessibility" class="block text-sm font-medium text-stone-700">Accessibility</label>
+                            <select id="accessibility" name="accessibility" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm">
+                                <option>On a main road</option>
+                                <option>On a side street</option>
+                                <option>Near a highway exit</option>
+                                <option>Difficult to access</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="visibility" class="block text-sm font-medium text-stone-700">Visibility</label>
+                            <select id="visibility" name="visibility" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm">
+                                <option>High (easy to see when passing by)</option>
+                                <option>Moderate (visible from a main street)</option>
+                                <option>Low (on a back street / hidden)</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="landStatus" class="block text-sm font-medium text-stone-700">Current Land Status</label>
+                            <select id="landStatus" name="landStatus" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm">
+                                <option>Completely empty (dirt)</option>
+                                <option>Has an old, unusable structure</option>
+                                <option>Has utility access (water, power)</option>
+                                <option>Has utilities and a usable structure</option>
+                                <option>Not specified</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="zoning" class="block text-sm font-medium text-stone-700">What do you know about local zoning rules?</label>
+                            <textarea id="zoning" name="zoning" rows="2" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm"
+                                      placeholder="e.g., 'I think it's only for houses,' or 'I know my neighbor has a shop,' or 'I have no idea.'"></textarea>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Part 2: The Surrounding Area</legend>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mt-4">
+                        <div class="md:col-span-2">
+                            <label for="neighborhood" class="block text-sm font-medium text-stone-700">What is immediately next to your plot?</label>
+                            <textarea id="neighborhood" name="neighborhood" rows="2" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm"
+                                      placeholder="e.g., An apartment building, a vacant lot, a shop, a school..."></textarea>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="demographics" class="block text-sm font-medium text-stone-700">What kind of people live and work in this area?</label>
+                            <textarea id="demographics" name="demographics" rows="2" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm"
+                                      placeholder="e.g., Families with children, college students, office workers, retirees..."></textarea>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="localNeeds" class="block text-sm font-medium text-stone-700">What services or businesses are missing in your area?</label>
+                            <textarea id="localNeeds" name="localNeeds" rows="2" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm"
+                                      placeholder="e.g., A good cafe, a playground, a co-working space, a specific type of store..."></textarea>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="competition" class="block text-sm font-medium text-stone-700">What other businesses are already successful nearby?</label>
+                            <textarea id="competition" name="competition" rows="2" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm"
+                                      placeholder="e.g., 'There are 3 grocery stores,' 'The local bakery is always busy.'"></textarea>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Part 3: Your Resources & Goals</legend>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mt-4">
+                        <div>
+                            <label for="budget" class="block text-sm font-medium text-stone-700">Investment Budget (Capital)</label>
+                            <select id="budget" name="budget" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm">
+                                <option>0 - 5,00,000 rs</option>
+                                <option>5,00,000 rs - 50,00,000 rs</option>
+                                <option>50,00,000 rs +</option>
+                                <option>I prefer not to say</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="incomeGoal" class="block text-sm font-medium text-stone-700">Minimum Monthly Income Goal</label>
+                            <select id="incomeGoal" name="incomeGoal" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm">
+                                <option>Below 10,000 rs</option>
+                                <option>Above 10,000 rs</option>
+                                <option>Above 50,000 rs</option>
+                                <option>Above 1,00,000 rs</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="time" class="block text-sm font-medium text-stone-700">Time & Involvement</label>
+                            <select id="time" name="time" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm">
+                                <option>Passive (generates money on its own)</option>
+                                <option>Part-time (a few hours a week)</option>
+                                <option>Full-time (active involvement)</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="skills" class="block text-sm font-medium text-stone-700">Your Skills & Interests</label>
+                            <textarea id="skills" name="skills" rows="2" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm"
+                                      placeholder="e.g., Cooking, gardening, managing events, technology, working with people..."></textarea>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Language Selection</legend>
+                    <div class="mt-4">
+                        <div class="flex items-center space-x-6">
+                            <label class="flex items-center">
+                                <input type="radio" id="lang-english" name="language" value="english" checked
+                                       class="h-4 w-4 text-teal-600 focus:ring-teal-500 border-stone-300">
+                                <span class="ml-2 text-sm font-medium text-stone-700">English</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" id="lang-hindi" name="language" value="hindi"
+                                       class="h-4 w-4 text-teal-600 focus:ring-teal-500 border-stone-300">
+                                <span class="ml-2 text-sm font-medium text-stone-700">हिंदी (Hindi)</span>
+                            </label>
+                        </div>
+                        <p class="mt-2 text-sm text-stone-500">Select your preferred language for the report and PDF download.</p>
+                    </div>
+                </fieldset>
+
+                <div>
+                    <button type="submit" id="generate-button"
+                            class="w-full flex justify-center items-center gap-2 py-3 px-6 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:bg-stone-400">
+                        Generate My Report
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <div id="report-area" class="mt-8 md:mt-12">
+            
+            <div id="welcome-message" class="bg-white p-8 rounded-lg shadow-md border border-stone-200">
+                <h2 class="text-2xl font-bold text-stone-800 mb-4">Welcome to Your Land's Future</h2>
+                <p class="text-stone-600 mb-4">This tool acts as your initial consultant. By providing the details above, our AI analyst will perform a preliminary investigation based on your specific location, budget, and goals.</p>
+                <p class="text-stone-600 mb-4">The more detail you provide, the better and more personalized your report will be.</p>
+                <p class="text-stone-600 font-semibold">Fill out the form to get started and receive your custom report right here.</p>
+            </div>
+
+            <div id="loading-state" class="hidden">
+                <div class="flex flex-col justify-center items-center h-full min-h-[300px] text-center p-8 bg-white rounded-lg shadow-md border border-stone-200">
+                    <div class="report-loader"></div>
+                    <p class="text-stone-600 mt-4 text-lg">Analyzing your property...</p>
+                    <p class="text-stone-500 mt-2">This may take up to 60 seconds as we research local data for you.</p>
+                </div>
+            </div>
+
+            <div id="report-container" class="hidden">
+            </div>
+            
+            <button id="pdf-button"
+                    class="hidden w-full md:w-auto mt-6 py-2 px-6 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-stone-700 hover:bg-stone-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-stone-500 disabled:bg-stone-400">
+                Download Report as PDF
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        const form = document.getElementById('land-form');
+        const button = document.getElementById('generate-button');
+        const reportArea = document.getElementById('report-area');
+        const welcomeMessage = document.getElementById('welcome-message');
+        const loadingState = document.getElementById('loading-state');
+        const reportContainer = document.getElementById('report-container');
+        const pdfButton = document.getElementById('pdf-button');
+        const buttonInitialText = button.innerHTML;
+
+        let currentReportMarkdown = ''; // Stores the raw markdown from the API
+
+        const setLoading = (isLoading) => {
+            if (isLoading) {
+                button.disabled = true;
+                button.innerHTML = '<div class="loader"></div> Processing...';
+                welcomeMessage.classList.add('hidden');
+                reportContainer.classList.add('hidden');
+                pdfButton.classList.add('hidden');
+                loadingState.classList.remove('hidden');
+            } else {
+                button.disabled = false;
+                button.innerHTML = buttonInitialText;
+                loadingState.classList.add('hidden');
+            }
+        };
+        
+        const renderError = (title, message) => {
+            welcomeMessage.classList.add('hidden');
+            loadingState.classList.add('hidden');
+            reportContainer.innerHTML = `
+                <div class="bg-red-50 border-l-4 border-red-400 p-4 rounded-md shadow-sm">
+                    <h3 class="text-lg font-bold text-red-800">${title}</h3>
+                    <p class="text-red-700 mt-2">${message}</p>
+                </div>
+            `;
+            reportContainer.classList.remove('hidden');
+        };
+        
+        const renderValidationError = (message) => {
+             welcomeMessage.classList.add('hidden');
+             loadingState.classList.add('hidden');
+             reportContainer.innerHTML = `
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md shadow-sm">
+                    <h3 class="text-lg font-bold text-yellow-800">Missing Information</h3>
+                    <p class="text-yellow-700 mt-2">${message}</p>
+                </div>
+            `;
+             reportContainer.classList.remove('hidden');
+        }
+
+        const handleSubmit = async (e) => {
+            e.preventDefault();
+            setLoading(true);
+            currentReportMarkdown = ''; // Reset on new submission
+
+            const formData = {
+                name: document.getElementById('name').value,
+                location: document.getElementById('location').value,
+                latlong: document.getElementById('latlong').value,
+                areaType: document.getElementById('areaType').value,
+                landSize: document.getElementById('landSize').value,
+                landShape: document.getElementById('landShape').value,
+                accessibility: document.getElementById('accessibility').value,
+                visibility: document.getElementById('visibility').value,
+                landStatus: document.getElementById('landStatus').value,
+                zoning: document.getElementById('zoning').value,
+                neighborhood: document.getElementById('neighborhood').value,
+                demographics: document.getElementById('demographics').value,
+                localNeeds: document.getElementById('localNeeds').value,
+                competition: document.getElementById('competition').value,
+                budget: document.getElementById('budget').value,
+                incomeGoal: document.getElementById('incomeGoal').value,
+                time: document.getElementById('time').value,
+                skills: document.getElementById('skills').value, // Fixed typo: 's:' to 'skills:'
+                language: document.querySelector('input[name="language"]:checked').value, // Add language selection
+            };
+
+            if (!formData.name || !formData.location || !formData.landSize) {
+                renderValidationError("Please provide your Name, Location, and Land Size to generate a report.");
+                setLoading(false);
+                return;
+            }
+
+            try {
+                const reportText = await callBackendAPI(formData);
+                currentReportMarkdown = reportText; // <-- SAVE the raw markdown
+                const reportHTML = markdownToHTML(reportText);
+                renderReport(reportHTML, formData.name, formData.location);
+            } catch (error) {
+                console.error(error);
+                renderError("Analysis Failed", `An error occurred: ${error.message}. Please check your backend server and try again.`);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        const fetchWithRetry = async (url, options, retries = 3, delay = 1000) => {
+            try {
+                const response = await fetch(url, options);
+                if (!response.ok) {
+                    let errorDetails = await response.text();
+                    try {
+                        errorDetails = JSON.parse(errorDetails);
+                    } catch (e) {}
+                    console.error("Fetch Error Details:", errorDetails);
+                    throw new Error(`Server error: ${response.status}. ${errorDetails.error || 'Check backend logs.'}`);
+                }
+                return response;
+            } catch (err) { // Fixed syntax error: 'catch (err). {'
+                if (retries > 0) {
+                    await new Promise(res => setTimeout(res, delay));
+                    return fetchWithRetry(url, options, retries - 1, delay * 2);
+                }
+                throw err;
+            }
+        };
+
+        const callBackendAPI = async (formData) => {
+            const backendUrl = "http://127.0.0.1:5000/api/generate";
+
+            const response = await fetchWithRetry(backendUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+
+            const result = await response.json();
+
+            if (result.reportText) {
+                return result.reportText;
+            } else {
+                throw new Error(result.error || "Unknown backend error.");
+            }
+        };
+
+        const renderReport = (html, name, location) => {
+            const reportHeader = `<h2 class="text-3xl font-bold text-stone-800 mb-6">Analysis for ${name}, ${location}</h2>`;
+            reportContainer.innerHTML = `<div id="report-to-print" class="bg-white p-8 rounded-lg shadow-md border border-stone-200">${reportHeader}${html}</div>`;
+            reportContainer.classList.remove('hidden');
+            pdfButton.classList.remove('hidden'); // Fixed typo: 'Two' to 'pdfButton'
+        };
+
+        // --- NEW PDF DOWNLOAD FUNCTION ---
+        const handleDownloadPDF = async () => {
+            if (!currentReportMarkdown) {
+                alert("Please generate a report first.");
+                return;
+            }
+
+            pdfButton.disabled = true;
+            pdfButton.innerHTML = '<div class="loader"></div> Creating PDF...';
+            
+            try {
+                // Call the new backend endpoint
+                const response = await fetch("http://127.0.0.1:5000/api/download_pdf", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        markdown_text: currentReportMarkdown, // Send the raw markdown
+                        name: document.getElementById('name').value,
+                        location: document.getElementById('location').value,
+                        language: document.querySelector('input[name="language"]:checked').value // Add language
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`PDF generation failed on server: ${response.status}`);
+                }
+                
+                // Handle the file download
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const language = document.querySelector('input[name="language"]:checked').value;
+                a.download = language === 'hindi' ? 'भूमि_रिपोर्ट.pdf' : 'AI_Land_Report.pdf';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+
+            } catch (error) {
+                console.error("PDF Download Error:", error);
+                renderError("PDF Download Failed", error.message);
+            } finally {
+                pdfButton.disabled = false;
+                pdfButton.innerHTML = 'Download Report as PDF';
+            }
+        };
+
+        const markdownToHTML = (md) => {
+            const lines = md.split('\n');
+            let html = '';
+            let inUl = false;
+            let inOl = false;
+            let inTable = false;
+
+            const checkLists = () => {
+                let s = '';
+                if (inUl) { s += '</ul>'; inUl = false; }
+                if (inOl) { s += '</ol>'; inOl = false; }
+                return s;
+            };
+
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i];
+
+                line = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                           .replace(/\*(.*?)\*/g, '<em>$1</em>');
+                
+                if (line.match(/^# (.*)/)) {
+                    html += checkLists();
+                    if (inTable) { html += '</tbody></table></div>'; inTable = false; }
+                    html += `<h2 class="text-2xl font-bold mt-6 mb-3 text-stone-800">${line.substring(2)}</h2>`;
+                } else if (line.match(/^## (.*)/)) {
+                    html += checkLists();
+                    if (inTable) { html += '</tbody></table></div>'; inTable = false; }
+                    html += `<h3 class="text-xl font-bold mt-5 mb-2 text-stone-700">${line.substring(3)}</h3>`;
+                } else if (line.match(/^### (.*)/) || line.match(/^#### (.*)/)) {
+                    html += checkLists();
+                    if (inTable) { html += '</tbody></table></div>'; inTable = false; }
+                    html += `<h4 class="text-lg font-semibold mt-4 mb-1 text-stone-700">${line.substring(line.indexOf(' ') + 1)}</h4>`;
+                } else if (line.match(/^[-*] (.*)/)) {
+                    if (inTable) { html += '</tbody></table></div>'; inTable = false; }
+                    if (inOl) { html += '</ol>'; inOl = false; }
+                    if (!inUl) { html += '<ul class="list-disc list-inside mb-4 space-y-1 text-stone-600">'; inUl = true; }
+                    html += `<li class="mb-1">${line.substring(2)}</li>`;
+                } else if (line.match(/^\d+\. (.*)/)) {
+                    if (inTable) { html += '</tbody></table></div>'; inTable = false; }
+                    if (inUl) { html += '</ul>'; inUl = false; }
+                    if (!inOl) { html += '<ol class="list-decimal list-inside mb-4 space-y-1 text-stone-600">'; inOl = true; }
+                    html += `<li class="mb-1">${line.substring(line.indexOf(' ') + 1)}</li>`;
+                } else if (line.match(/^\|.*\|$/)) {
+                    if (inOl) { html += '</ol>'; inOl = false; }
+                    if (inUl) { html += '</ul>'; inUl = false; }
+                    
+                    const cells = line.split('|').map(c => c.trim()).slice(1, -1);
+                    
+                    if (!inTable) {
+                        html += '<div class="overflow-x-auto rounded-lg border border-stone-300 my-4"><table class="w-full text-left border-collapse">';
+                        html += '<thead class="bg-stone-100">';
+                        html += '<tr>';
+                        cells.forEach(cell => {
+                            html += `<th class="p-3 font-semibold text-sm text-stone-700">${cell}</th>`;
+                        });
+                        html += '</tr></thead><tbody>';
+                        inTable = true;
+                        
+                        if (lines[i+1] && lines[i+1].match(/^\|[-: ]+\|$/)) {
+                            i++; 
+                        }
+                    } else {
+                        html += '<tr class="border-t border-stone-200">';
+                        cells.forEach(cell => {
+                            html += `<td class="p-3 text-stone-600">${cell}</td>`;
+                        });
+                        html += '</tr>';
+                    }
+                } else if (line.trim() === '') {
+                    html += checkLists();
+                    if (inTable) { html += '</tbody></table></div>'; inTable = false; }
+                    html += '<br />';
+                } else {
+                    html += checkLists();
+                    if (inTable) { html += '</tbody></table></div>'; inTable = false; }
+                    
+                    if (line.startsWith('Disclaimer:')) {
+                        html += `<p class="mt-8 mb-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 text-sm">${line}</p>`;
+                    } else {
+                        html += `<p class="mb-4 text-stone-600">${line}</p>`;
+                    }
+                }
+            }
+            html += checkLists();
+            if (inTable) { html += '</tbody></table></div>'; inTable = false; }
+            return html;
+        };
+        
+        form.addEventListener('submit', handleSubmit);
+        pdfButton.addEventListener('click', handleDownloadPDF);
+        
+        welcomeMessage.classList.remove('hidden');
+    </script>
+</body>
+</html>
+
