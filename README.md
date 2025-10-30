@@ -44,29 +44,36 @@ cd your-repo-name
 
 **A. Create a Virtual Environment:**
 
-\# For Windows  
+\# For Windows 
+'''http
 python -m venv venv  
+'''
+'''http
 .\\venv\\Scripts\\activate
+'''
 
 \# For macOS/Linux  
+'''http
 python3 -m venv venv  
+'''
+'''http
 source venv/bin/activate
-
+'''
 B. Install Required Packages:  
 A requirements.txt file is included in this repository.  
+'''http
 pip install -r requirements.txt
-
+'''
 C. Set Up Environment Variables:  
-Create a file named .env in the root of your project folder.  
+Create a file named .env in the root of your project folder. 
+'''http
 GEMINI\_API\_KEY=your\_api\_key\_goes\_here
-
-D. Download Hindi Fonts:  
+'''
+D. Downloaded Hindi Fonts:  
 The PDF generation for Hindi requires two font files.
 
-1. Go to [Noto Sans Devanagari on Google Fonts](https://fonts.google.com/specimen/Noto+Sans+Devanagari).
-2. Select the "Regular 400" and "Bold 700" styles.
-3. Click "Download" and unzip the file.
-4. From the static folder, copy these two files into the root of your project directory (the same folder as app.py):
+1. From [Noto Sans Devanagari on Google Fonts](https://fonts.google.com/specimen/Noto+Sans+Devanagari).
+2. the "Regular 400" and "Bold 700" styles.
 
    * NotoSansDevanagari-Regular.ttf
    * NotoSansDevanagari-Bold.ttf
@@ -86,9 +93,9 @@ Your project folder should now look like this:
 ### **1. Start the Backend Server**
 
 With your virtual environment active, run the Flask application:
-
+'''http
 python app.py
-
+'''
 Your server will start, typically on http://127.0.0.1:5000.
 
 ### **2. Open the Frontend**
