@@ -44,31 +44,31 @@ cd your-repo-name
 
 **A. Create a Virtual Environment:**
 
-\# For Windows 
-'''http
-python -m venv venv  
-'''
-'''http
-.\\venv\\Scripts\\activate
-'''
+### For Windows 
+```http
+  python -m venv venv  
+```
+```http
+  .\\venv\\Scripts\\activate
+```
 
-\# For macOS/Linux  
-'''http
-python3 -m venv venv  
-'''
-'''http
-source venv/bin/activate
-'''
+### For macOS/Linux  
+```http
+  python3 -m venv venv  
+```
+```http
+  source venv/bin/activate
+```
 B. Install Required Packages:  
-A requirements.txt file is included in this repository.  
-'''http
-pip install -r requirements.txt
-'''
+ A requirements.txt file is included in this repository.  
+```http
+  pip install -r requirements.txt
+```
 C. Set Up Environment Variables:  
-Create a file named .env in the root of your project folder. 
-'''http
-GEMINI\_API\_KEY=your\_api\_key\_goes\_here
-'''
+ Create a file named .env in the root of your project folder. 
+```http
+  GEMINI\_API\_KEY=your\_api\_key\_goes\_here
+```
 D. Downloaded Hindi Fonts:  
 The PDF generation for Hindi requires two font files.
 
@@ -92,10 +92,10 @@ Your project folder should now look like this:
 
 ### **1. Start the Backend Server**
 
-With your virtual environment active, run the Flask application:
-'''http
-python app.py
-'''
+ With your virtual environment active, run the Flask application:
+```http
+  python app.py
+```
 Your server will start, typically on http://127.0.0.1:5000.
 
 ### **2. Open the Frontend**
